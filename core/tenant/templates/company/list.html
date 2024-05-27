@@ -1,0 +1,20 @@
+{% extends 'list.html' %}
+{% load static %}
+{% block assets_list %}
+    <script src="{% static 'company/js/list.js' %}"></script>
+{% endblock %}
+
+{% block columns %}
+    <th>Id</th>
+    <th>Razón social</th>
+    <th>Nombre Comercial</th>
+    <th>Número de NIT</th>
+    <th>Teléfono</th>
+    <th>Esquema</th>
+    <th>Plan</th>
+    <th class="text-center">Opciones</th>
+{% endblock %}
+
+{% block javascript_list %}
+
+{% endblock %}
