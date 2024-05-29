@@ -82,6 +82,7 @@ var sale = {
                         buttons += '<div class="dropdown-menu dropdown-menu-right">';
                         // buttons += '<a href="' + pathname + 'update/' + row.id +'/" class="dropdown-item"><i class="fas fa-edit"></i>Editar factura</a>';                       
                         buttons += '<a class="dropdown-item" rel="detail"><i class="fas fa-folder-open"></i> Detalle de productos</a>';
+                        buttons += '<a href="' + pathname + 'update/' + row.id +'/" class="dropdown-item"><i class="fas fa-edit"></i> Editar factura</a>';
                         buttons += '<a target="_blank" href="' + pathname + 'print/invoice/' + row.id + '/" class="dropdown-item"><i class="fas fa-ticket-alt"></i> Imprimir factura ticket</a> ';
                         if (row.status.id === 'without_authorizing' && row.receipt.code === '01') {
                             // buttons += '<a href="' + pathname + 'update/' + row.id +'/" class="dropdown-item"><i class="fas fa-edit"></i>Editar factura</a>';

@@ -304,13 +304,13 @@
     </div>
 
     <script type="application/javascript">
-        // sale.detail.products = {{ products|safe }};        
-        // // console.log(sale);
-        // sale.listProducts();
+        sale.detail.products = {{ products|safe }};
         sale.detail.iva = {{ company.iva|safe }};
         $(function () {
+            sale.listProducts();
             {% if final_consumer %}
                 select_client.select2('trigger', 'select', {data: {{ final_consumer|safe }}});
+                select_receipt.trigger('change');
             {% endif %}
         });
     </script>
