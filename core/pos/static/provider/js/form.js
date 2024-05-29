@@ -1,49 +1,7 @@
-var btnSearchRUCInSRI;
-var input_ruc;
-
-var provider = {
-    searchRUCInSRI: function () {
-        $.ajax({
-            url: pathname,
-            data: {
-                'action': 'search_ruc_in_sri',
-                'ruc': input_ruc.val()
-            },
-            type: 'POST',
-            headers: {
-                'X-CSRFToken': csrftoken
-            },
-            dataType: 'json',
-            beforeSend: function () {
-                $('input[name="name"]').val('');
-            },
-            success: function (request) {
-                if (!request.hasOwnProperty('error')) {
-                    $('input[name="name"]').val(request.razonSocial);
-                    var content = '<dl>';
-                    Object.entries(request).forEach(([key, value]) => {
-                        content += '<dt>' + key.toUpperCase() + '</dt>';
-                        if (typeof (value) == "object") {
-                            content += '<dd>' + JSON.stringify(value) + '</dd>'
-                        } else {
-                            content += '<dd>' + value + '</dd>'
-                        }
-                    });
-                    $('#details').html(content);
-                    $('#myModalSRI').modal('show');
-                    return false;
-                }
-                message_error(request.error);
-            },
-            error: function (jqXHR, textStatus, errorThrown) {
-                message_error(errorThrown + ' ' + textStatus);
-            }
-        });
-    }
-};
+var fv;
 
 document.addEventListener('DOMContentLoaded', function (e) {
-    const fv = FormValidation.formValidation(document.getElementById('frmForm'), {
+    fv = FormValidation.formValidation(document.getElementById('frmForm'), {
             locale: 'es_ES',
             localization: FormValidation.locales.es_ES,
             plugins: {
@@ -78,6 +36,28 @@ document.addEventListener('DOMContentLoaded', function (e) {
                                 'X-CSRFToken': csrftoken
                             },
                         }
+                    }
+                },
+                first_name: {
+                    validators: {
+                        notEmpty: {},
+                        stringLength: {
+                            min: 2,
+                        }
+                    }
+                },
+                last_name: {
+                    validators: {
+                        notEmpty: {},
+                        stringLength: {
+                            min: 2,
+                        }
+                    }
+                },
+                dv: {
+                    validators: {
+                        notEmpty: {},
+                        digits: {}
                     }
                 },
                 ruc: {
@@ -206,11 +186,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
 });
 
 $(function () {
-
-    btnSearchRUCInSRI = $('.btnSearchRUCInSRI');
-    input_ruc = $('input[name="ruc"]');
-
-    input_ruc
+    $('input[name="ruc"]')
         .on('keyup', function () {
             var ruc = $(this).val();
             btnSearchRUCInSRI.prop('disabled', ruc.length < 13);
@@ -223,9 +199,16 @@ $(function () {
         return validate_text_box({'event': e, 'type': 'numbers'});
     });
 
-    btnSearchRUCInSRI.on('click', function () {
-        provider.searchRUCInSRI();
-    });
-
-    $('i[data-field="search_ruc_sri"]').hide();
+    $('input[name="dv"]')
+        .TouchSpin({
+            min: 0,
+            max: 1000,
+            step: 1
+        })
+        .on('change touchspin.on.min touchspin.on.max', function () {
+            fv.revalidateField('dv');
+        })
+        .on('keypress', function (e) {
+            return validate_text_box({'event': e, 'type': 'numbers'});
+        });
 });

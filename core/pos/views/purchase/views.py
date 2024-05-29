@@ -4,7 +4,7 @@ from django.db import transaction
 from django.db.models import Q
 from django.http import HttpResponse
 from django.urls import reverse_lazy
-from django.views.generic import CreateView, DeleteView, FormView
+from django.views.generic import CreateView, DeleteView, FormView, UpdateView
 
 from core.pos.forms import PurchaseForm, Purchase, PurchaseDetail, Product, Provider, DebtsPay, ProviderForm, PAYMENT_TYPE
 from core.reports.forms import ReportForm
@@ -139,6 +139,124 @@ class PurchaseCreateView(GroupPermissionMixin, CreateView):
         context['frmProvider'] = ProviderForm()
         context['list_url'] = self.success_url
         context['action'] = 'add'
+        context['provider'] = dict()
+        context['products'] = []
+        return context
+
+
+class PurchaseUpdateView(GroupPermissionMixin, UpdateView):
+    model = Purchase
+    template_name = 'purchase/create.html'
+    form_class = PurchaseForm
+    success_url = reverse_lazy('purchase_list')
+    permission_required = 'add_purchase'
+
+    def get_provider(self):
+        return json.dumps(self.object.provider.toJSON())
+
+    def get_products(self):
+        data = []
+        for detail in self.object.purchasedetail_set.all():
+            product = detail.product.toJSON()
+            product['cant'] = detail.cant
+            data.append(product)
+        return json.dumps(data)
+
+    def dispatch(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        return super().dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        action = request.POST['action']
+        data = {}
+        try:
+            if action == 'update':
+                with transaction.atomic():
+                    purchase = self.object
+                    purchase.number = request.POST['number']
+                    purchase.provider_id = int(request.POST['provider'])
+                    purchase.payment_type = request.POST['payment_type']
+                    purchase.date_joined = request.POST['date_joined']
+                    purchase.save()
+                    for detail in purchase.purchasedetail_set.all():
+                        detail.product.stock -= detail.cant
+                        detail.product.save()
+                        detail.delete()
+                    for i in json.loads(request.POST['products']):
+                        product = Product.objects.get(pk=i['id'])
+                        detail = PurchaseDetail()
+                        detail.purchase_id = purchase.id
+                        detail.product_id = product.id
+                        detail.cant = int(i['cant'])
+                        detail.price = float(i['price'])
+                        detail.subtotal = detail.cant * float(detail.price)
+                        detail.save()
+                        detail.product.stock += detail.cant
+                        detail.product.save()
+
+                    purchase.calculate_invoice()
+
+                    if purchase.payment_type == PAYMENT_TYPE[1][0]:
+                        purchase.end_credit = request.POST['end_credit']
+                        purchase.save()
+                        debtspay = DebtsPay()
+                        debtspay.purchase_id = purchase.id
+                        debtspay.date_joined = purchase.date_joined
+                        debtspay.end_date = purchase.end_credit
+                        debtspay.debt = purchase.subtotal
+                        debtspay.saldo = purchase.subtotal
+                        debtspay.save()
+            elif action == 'search_product':
+                data = []
+                ids = json.loads(request.POST['ids'])
+                term = request.POST['term']
+                queryset = Product.objects.filter(inventoried=True).exclude(id__in=ids).order_by('name')
+                if len(term):
+                    queryset = queryset.filter(Q(name__icontains=term) | Q(code__icontains=term))
+                    queryset = queryset[0:10]
+                for i in queryset:
+                    item = i.toJSON()
+                    item['value'] = i.get_full_name()
+                    data.append(item)
+            elif action == 'search_provider':
+                data = []
+                for i in Provider.objects.filter(name__icontains=request.POST['term']).order_by('name')[0:10]:
+                    data.append(i.toJSON())
+            elif action == 'validate_provider':
+                data = {'valid': True}
+                queryset = Provider.objects.all()
+                pattern = request.POST['pattern']
+                parameter = request.POST['parameter'].strip()
+                if pattern == 'name':
+                    data['valid'] = not queryset.filter(name__iexact=parameter).exists()
+                elif pattern == 'ruc':
+                    data['valid'] = not queryset.filter(ruc=parameter).exists()
+                elif pattern == 'mobile':
+                    data['valid'] = not queryset.filter(mobile=parameter).exists()
+                elif pattern == 'email':
+                    data['valid'] = not queryset.filter(email=parameter).exists()
+            elif action == 'validate_purchase':
+                data = {'valid': True}
+                pattern = request.POST['pattern']
+                if pattern == 'number':
+                    data['valid'] = not Purchase.objects.filter(number=request.POST['number']).exclude(id=self.object.id).exists()
+            elif action == 'create_provider':
+                form = ProviderForm(request.POST)
+                data = form.save()
+            else:
+                data['error'] = 'No ha seleccionado ninguna opción'
+        except Exception as e:
+            data['error'] = str(e)
+        return HttpResponse(json.dumps(data), content_type='application/json')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data()
+        context['title'] = 'Edición registro de una Compra'
+        context['frmProvider'] = ProviderForm()
+        context['list_url'] = self.success_url
+        context['action'] = 'update'
+        context['provider'] = self.get_provider()
+        context['products'] = self.get_products()
         return context
 
 

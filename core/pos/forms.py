@@ -18,6 +18,9 @@ class ProviderForm(forms.ModelForm):
         model = Provider
         fields = '__all__'
         widgets = {
+            'first_name': forms.TextInput(attrs={'placeholder': 'Ingrese un nombre'}),
+            'last_name': forms.TextInput(attrs={'placeholder': 'Ingrese un apellido'}),
+            'dv': forms.TextInput(),
             'name': forms.TextInput(attrs={'placeholder': 'Ingrese un nombre'}),
             'ruc': forms.TextInput(attrs={'placeholder': 'Ingrese un número de NIT'}),
             'mobile': forms.TextInput(attrs={'placeholder': 'Ingrese un teléfono celular'}),

@@ -623,6 +623,8 @@ $(function () {
         keepOpen: false
     });
 
+    input_date_joined.datetimepicker('date', input_date_joined.val());
+
     input_date_joined.on('change.datetimepicker', function (e) {
         fvPurchase.revalidateField('date_joined');
         input_end_credit.datetimepicker('minDate', e.date);

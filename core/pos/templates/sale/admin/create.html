@@ -24,13 +24,13 @@
                         <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                             <i class="fas fa-tasks"></i>
                         </button>
-                        
+
                         <div class="dropdown-menu dropdown-menu-right" style="cursor: pointer;">
                             <a class="dropdown-item btnAddClient">
                                 <i class="fas fa-plus"></i> Crear cliente
                             </a>
                         </div>
-                        
+
                     </div>
                 </div>
             </div>
@@ -39,7 +39,7 @@
             <div class="form-group">
                 <label>{{ form.date_joined.label }}:</label>
                 {{ form.date_joined }}
-            
+
             </div>
         </div>
         <div class="col-lg-3">
@@ -302,17 +302,16 @@
             </div>
         </div>
     </div>
-    
+
     <script type="application/javascript">
         // sale.detail.products = {{ products|safe }};        
         // // console.log(sale);
         // sale.listProducts();
-                
         sale.detail.iva = {{ company.iva|safe }};
-        $(function () {            
+        $(function () {
             {% if final_consumer %}
-            select_client.select2('trigger', 'select', {data: {{ final_consumer|safe }}});
+                select_client.select2('trigger', 'select', {data: {{ final_consumer|safe }}});
             {% endif %}
         });
-        </script>
+    </script>
 {% endblock %}

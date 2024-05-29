@@ -169,7 +169,11 @@
         </div>
     </div>
     <script type="application/javascript">
+        purchase.detail.products = {{ products|safe }};
         $(function () {
+            {% if provider %}
+                select_provider.select2('trigger', 'select', {data: {{ provider|safe }}});
+            {% endif %}
             purchase.listProducts();
         });
     </script>

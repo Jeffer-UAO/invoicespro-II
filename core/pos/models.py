@@ -36,29 +36,18 @@ class Provider(models.Model):
     first_name = models.CharField(max_length=50, blank=True, null=True, verbose_name='Nombre')
     last_name = models.CharField(max_length=50, blank=True, null=True, verbose_name='Apellido')
     dv = models.PositiveSmallIntegerField(verbose_name='Digito de Verificacion')
-
-    name = models.CharField(max_length=100,
-                            verbose_name='Razón Social')
-    ruc = models.BigIntegerField(unique=True,
-                           verbose_name='Número de NIT')
-    mobile = models.BigIntegerField(
-       verbose_name='Teléfono celular')
+    name = models.CharField(max_length=100, verbose_name='Razón Social')
+    ruc = models.BigIntegerField(unique=True, verbose_name='Número de NIT')
+    mobile = models.BigIntegerField(verbose_name='Teléfono celular')
     email = models.CharField(max_length=50, verbose_name='Email')
-    address = models.CharField(
-        max_length=500, null=True, blank=True, verbose_name='Dirección')
-    provider = models.BooleanField(
-        default=True, verbose_name='Proveedor')
-    cust = models.BooleanField(
-        default=False, verbose_name='Cliente')
-    employer = models.BooleanField(
-        default=False, verbose_name='Empleado')
-    other = models.BooleanField(
-        default=False, verbose_name='Otros')
-    active = models.BooleanField(
-        default=True, verbose_name='Activo')
-    created_date = models.DateTimeField(
-        auto_now_add=True, verbose_name=("Creado"))
-    
+    address = models.CharField(max_length=500, null=True, blank=True, verbose_name='Dirección')
+    provider = models.BooleanField(default=True, verbose_name='Proveedor')
+    cust = models.BooleanField(default=False, verbose_name='Cliente')
+    employer = models.BooleanField(default=False, verbose_name='Empleado')
+    other = models.BooleanField(default=False, verbose_name='Otros')
+    active = models.BooleanField(default=True, verbose_name='Activo')
+    created_date = models.DateTimeField(auto_now_add=True, verbose_name='Creado')
+
     def __str__(self):
         return self.get_full_name()
 
@@ -312,8 +301,7 @@ class PurchaseDetail(models.Model):
     cant = models.IntegerField(default=0)
     price = models.DecimalField(max_digits=9, decimal_places=2, default=0.00)
     dscto = models.DecimalField(max_digits=9, decimal_places=2, default=0.00)
-    subtotal = models.DecimalField(
-        max_digits=9, decimal_places=2, default=0.00)
+    subtotal = models.DecimalField(max_digits=9, decimal_places=2, default=0.00)
 
     def __str__(self):
         return self.product.name
@@ -415,7 +403,7 @@ class Sale(models.Model):
     client = models.ForeignKey(
         Client, on_delete=models.PROTECT, verbose_name='Cliente')
     receipt = models.ForeignKey(Receipt, on_delete=models.PROTECT, limit_choices_to={
-                                'code__in': [VOUCHER_TYPE[0][0], VOUCHER_TYPE[-1][0]]}, verbose_name='Tipo de comprobante')
+        'code__in': [VOUCHER_TYPE[0][0], VOUCHER_TYPE[-1][0]]}, verbose_name='Tipo de comprobante')
     voucher_number = models.CharField(
         max_length=9, verbose_name='Número de comprobante')
     voucher_number_full = models.CharField(
@@ -619,7 +607,7 @@ class Sale(models.Model):
         xml_SoftwareSecurityCode.set(
             'schemeAgencyName', 'CO, DIAN (Dirección de Impuestos y Aduanas Nacionales)')
 
-       # Agregar la subextensión sts:SoftwareSecurityCode
+        # Agregar la subextensión sts:SoftwareSecurityCode
         xml_SoftwareSecurityCode = ElementTree.SubElement(
             xml_DianExtensions, 'sts:SoftwareSecurityCode')
         xml_SoftwareSecurityCode.set('schemeAgencyID', '195')
@@ -1320,7 +1308,7 @@ class Sale(models.Model):
             detail.subtotal = detail.price * detail.cant
             detail.total_dscto = detail.subtotal * float(detail.dscto)
             detail.total_iva = (
-                detail.subtotal - detail.total_dscto) * detail.iva
+                                       detail.subtotal - detail.total_dscto) * detail.iva
             detail.total = detail.subtotal - detail.total_dscto
             detail.save()
 
@@ -1997,7 +1985,7 @@ class CreditNote(models.Model):
             detail.subtotal = detail.price * detail.cant
             detail.total_dscto = detail.subtotal * float(detail.dscto)
             detail.total_iva = (
-                detail.subtotal - detail.total_dscto) * detail.iva
+                                       detail.subtotal - detail.total_dscto) * detail.iva
             detail.total = detail.subtotal - detail.total_dscto
             detail.save()
 
