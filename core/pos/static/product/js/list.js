@@ -21,8 +21,6 @@ var product = {
                 {data: "name"},
                 {data: "code"},
                 {data: "inventoried"},
-                {data: "expiration_date"},
-                {data: "days_to_expire"},
                 {data: "price"},
                 {data: "price_list"},
                 {data: "price_promotion"},
@@ -134,6 +132,52 @@ $(function () {
 
     $("#data tbody")
         .off()
+        .on("click", 'a[rel="inventory"]', function () {
+            var tr = tblProducts.cell($(this).closest("td, li")).index();
+            var data = tblProducts.row(tr.row).data();
+            $('#tblInventory').DataTable({
+                autoWidth: false,
+                destroy: true,
+                ajax: {
+                    url: pathname,
+                    type: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrftoken
+                    },
+                    data: {
+                        'action': 'search_detail_products',
+                        'id': row.id
+                    },
+                    dataSrc: ""
+                },
+                columns: [
+                    {data: "date_joined"},
+                    {data: "quantity"},
+                    {data: "saldo"},
+                    {data: "expiration_date"},
+                ],
+                columnDefs: [
+                    {
+                        targets: [-1, -3],
+                        class: 'text-center',
+                        render: function (data, type, row) {
+                            return '$' + data.toFixed(2);
+                        }
+                    },
+                    {
+                        targets: [-2],
+                        class: 'text-center',
+                        render: function (data, type, row) {
+                            return data.toFixed(2);
+                        }
+                    }
+                ],
+                initComplete: function (settings, json) {
+                    $(this).wrap('<div class="dataTables_scroll"><div/>');
+                }
+            });
+            $('#myModalDetails').modal('show');
+        })
         .on("click", 'a[rel="image"]', function () {
             var tr = tblProducts.cell($(this).closest("td, li")).index();
             var data = tblProducts.row(tr.row).data();

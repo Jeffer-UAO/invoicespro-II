@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 
 from django.db import transaction
 from django.db.models import Q
@@ -7,6 +8,7 @@ from django.urls import reverse_lazy
 from django.views.generic import CreateView, DeleteView, FormView, UpdateView
 
 from core.pos.forms import PurchaseForm, Purchase, PurchaseDetail, Product, Provider, DebtsPay, ProviderForm, PAYMENT_TYPE
+from core.pos.models import Inventory
 from core.reports.forms import ReportForm
 from core.security.mixins import GroupPermissionMixin
 
@@ -75,8 +77,14 @@ class PurchaseCreateView(GroupPermissionMixin, CreateView):
                         detail.price = float(i['price'])
                         detail.subtotal = detail.cant * float(detail.price)
                         detail.save()
-                        detail.product.stock += detail.cant
-                        detail.product.save()
+
+                        inventory = Inventory()
+                        inventory.product_id = product.id
+                        if product.has_expiration_date:
+                            inventory.expiration_date = i['expiration_date']
+                        inventory.quantity = detail.cant
+                        inventory.saldo = detail.cant
+                        inventory.save()
 
                     purchase.calculate_invoice()
 
@@ -101,6 +109,7 @@ class PurchaseCreateView(GroupPermissionMixin, CreateView):
                 for i in queryset:
                     item = i.toJSON()
                     item['value'] = i.get_full_name()
+                    item['expiration_date'] = datetime.now().date().strftime('%Y-%m-%d')
                     data.append(item)
             elif action == 'search_provider':
                 data = []

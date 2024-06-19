@@ -15,8 +15,6 @@
     <th>Nombre</th>
     <th>Código</th>
     <th>Inventariado</th>
-    <th>Fecha de expiración</th>
-    <th>Días de expirar</th>
     <th>P./Compra</th>
     <th>P./Venta</th>
     <th>P./Promoción</th>
@@ -65,5 +63,36 @@
                 </div>
             </div>
         </form>
+    </div>
+    <div class="modal fade" id="myModalInventory" tabindex="-2" role="dialog" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-upload"></i> Inventario de Productos
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="container-fluid">
+                        <table style="width:100%;" class="table table-bordered" id="tblInventory">
+                            <thead>
+                            <tr>
+                                <th style="width: 20%;">Fecha de registro</th>
+                                <th style="width: 20%;">Cantidad ingresada</th>
+                                <th style="width: 20%;">Saldo</th>
+                                <th style="width: 20%;">Fecha de caducidad</th>
+                                <th style="width: 20%;">Días de expiración</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 {% endblock %}

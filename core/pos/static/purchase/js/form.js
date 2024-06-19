@@ -31,11 +31,22 @@ var purchase = {
                 {data: "id"},
                 {data: "code"},
                 {data: "short_name"},
+                {data: "expiration_date"},
                 {data: "cant"},
                 {data: "price"},
                 {data: "subtotal"},
             ],
             columnDefs: [
+                {
+                    targets: [-4],
+                    class: 'text-center',
+                    render: function (data, type, row) {
+                        if (row.has_expiration_date) {
+                            return '<input type="date" class="form-control" autocomplete="off" name="expiration_date" value="' + row.expiration_date + '">';
+                        }
+                        return '---';
+                    }
+                },
                 {
                     targets: [-3],
                     class: 'text-center',
@@ -82,7 +93,7 @@ var purchase = {
         });
     },
     getProductsIds: function () {
-        return this.detail.products.map(value => value.id);
+        return this.detail.products.filter(value => !value.has_expiration_date).map(value => value.id);
     },
     addProduct: function (item) {
         this.detail.products.push(item);
@@ -440,6 +451,10 @@ $(function () {
             purchase.detail.products[tr.row].cant = parseInt($(this).val());
             purchase.calculateInvoice();
             $('td:last', tblProducts.row(tr.row).node()).html('$' + purchase.detail.products[tr.row].subtotal.toFixed(2));
+        })
+        .on('change', 'input[name="expiration_date"]', function () {
+            var tr = tblProducts.cell($(this).closest('td, li')).index();
+            purchase.detail.products[tr.row].expiration_date = this.value;
         })
         .on('change', 'input[name="price"]', function () {
             var tr = tblProducts.cell($(this).closest('td, li')).index();
