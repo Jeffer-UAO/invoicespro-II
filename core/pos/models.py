@@ -152,11 +152,17 @@ class Product(models.Model):
             return promotions.price_final
         return 0.00
 
+    def first_price_list(self):
+        if self.price_list and isinstance(self.price_list, list):
+            price_list = sorted(self.price_list, key=lambda x: x['quantity'])
+            return price_list[0]['gross_price']
+        return 0.00
+
     def get_price_current(self):
         price_promotion = self.get_price_promotion()
         if price_promotion > 0:
             return price_promotion
-        return self.pvp
+        return self.first_price_list()
 
     def get_image(self):
         if self.image:
@@ -183,8 +189,11 @@ class Product(models.Model):
     def calculate_gross_price(self, price):
         company = Company.objects.first()
         if company:
-            return round(price / (1 + (float(company.iva) / 100)), 4)
+            return round(price / (1 + (float(company.iva) / 100)), 2)
         return price
+
+    def get_price_list(self):
+        return self.price_list if self.price_list else []
 
     def toJSON(self):
         item = model_to_dict(self)
