@@ -20,10 +20,9 @@ var product = {
                 {data: "id"},
                 {data: "name"},
                 {data: "code"},
-                {data: "category.name"},
                 {data: "inventoried"},
-                {data: "image"},
-                {data: "barcode"},
+                {data: "expiration_date"},
+                {data: "days_to_expire"},
                 {data: "price"},
                 {data: "price_list"},
                 {data: "price_promotion"},
@@ -32,27 +31,30 @@ var product = {
             ],
             columnDefs: [
                 {
-                    targets: [4],
+                    targets: [3],
                     class: "text-center",
                     render: function (data, type, row) {
                         if (row.inventoried) {
-                            return "Si";
+                            return '<span class="badge badge-success badge-pill">Si</span>';
                         }
-                        return "No";
+                        return '<span class="badge badge-danger badge-pill">No</span>';
                     },
                 },
                 {
-                    targets: [5],
+                    targets: [-7],
                     class: "text-center",
                     render: function (data, type, row) {
-                        return '<a rel="image" class="btn btn-secondary btn-xs btn-flat"><i class="fas fa-file-image"></i></a>';
+                        return data;
                     },
                 },
                 {
-                    targets: [6],
+                    targets: [-6],
                     class: "text-center",
                     render: function (data, type, row) {
-                        return '<a rel="barcode" class="btn btn-success btn-xs btn-flat"><i class="fas fa-barcode"></i></a>';
+                        if (data <= 0) {
+                            return '<span class="badge badge-danger badge-pill">0</span>';
+                        }
+                        return '<span class="badge badge-success badge-pill">' + data + '</span>';
                     },
                 },
                 {

@@ -110,6 +110,7 @@ class Product(models.Model):
     price_list = models.JSONField(default=dict, verbose_name='Precios de venta')
     category = models.ForeignKey(Category, on_delete=models.PROTECT, verbose_name='Categoría')
     price = models.DecimalField(max_digits=9, decimal_places=2, default=0.00, verbose_name='Precio de Compra')
+    expiration_date = models.DateField(default=datetime.now, verbose_name='Fecha de caducidad')
     pvp = models.DecimalField(max_digits=9, decimal_places=2, default=0.00, verbose_name='Precio de Venta')
     pvp1 = models.DecimalField(max_digits=9, decimal_places=2, default=0.00, verbose_name='Precio 1')
     pvp2 = models.DecimalField(max_digits=9, decimal_places=2, default=0.00, verbose_name='Precio 2')
@@ -195,8 +196,13 @@ class Product(models.Model):
     def get_price_list(self):
         return self.price_list if self.price_list else []
 
+    def days_to_expire(self):
+        return (self.expiration_date - datetime.now().date()).days
+
     def toJSON(self):
         item = model_to_dict(self)
+        item['expiration_date'] = self.expiration_date.strftime('%Y-%m-%d')
+        item['days_to_expire'] = self.days_to_expire()
         item['full_name'] = self.get_full_name()
         item['short_name'] = self.get_short_name()
         item['category'] = self.category.toJSON()

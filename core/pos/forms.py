@@ -78,6 +78,13 @@ class ProductForm(forms.ModelForm):
             'code': forms.TextInput(attrs={'placeholder': 'Ingrese un código'}),
             'ref': forms.TextInput(attrs={'placeholder': 'Ingrese una referencia'}),
             'flag': forms.TextInput(attrs={'placeholder': 'Ingrese un grupo'}),
+            'expiration_date': forms.DateInput(format='%Y-%m-%d', attrs={
+                'class': 'form-control datetimepicker-input',
+                'id': 'expiration_date',
+                'value': datetime.now().strftime('%Y-%m-%d'),
+                'data-toggle': 'datetimepicker',
+                'data-target': '#expiration_date'
+            }),
             'image_alterna': forms.TextInput(attrs={'placeholder': 'Ingrese una URL'}),
             'slug': forms.TextInput(attrs={'placeholder': 'Ingrese una URL'}),
             'description': forms.Textarea(attrs={'placeholder': 'Ingrese una descripción', 'rows': 3, 'cols': 3}),

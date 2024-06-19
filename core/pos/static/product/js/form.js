@@ -1,5 +1,5 @@
 var fv;
-var input_inventoried;
+var input_inventoried, input_expiration_date;
 var tblPrices;
 
 var product = {
@@ -152,6 +152,17 @@ document.addEventListener('DOMContentLoaded', function (e) {
                         // }
                     }
                 },
+                expiration_date: {
+                    validators: {
+                        notEmpty: {
+                            message: 'La fecha es obligatoria'
+                        },
+                        date: {
+                            format: 'YYYY-MM-DD',
+                            message: 'La fecha no es válida'
+                        }
+                    },
+                },
                 category: {
                     validators: {
                         notEmpty: {
@@ -236,6 +247,18 @@ document.addEventListener('DOMContentLoaded', function (e) {
 $(function () {
 
     input_inventoried = $('input[name="inventoried"]');
+    input_expiration_date = $('input[name="expiration_date"]');
+
+    input_expiration_date.datetimepicker({
+        useCurrent: false,
+        format: 'YYYY-MM-DD',
+        locale: 'es',
+        keepOpen: false,
+    });
+
+    input_expiration_date.on('change.datetimepicker', function (e) {
+        fv.revalidateField('expiration_date');
+    });
 
     $('.select2').select2({
         theme: 'bootstrap4',
