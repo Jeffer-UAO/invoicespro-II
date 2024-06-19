@@ -104,50 +104,32 @@ class Product(models.Model):
     item = models.UUIDField(editable=False, blank=True, null=True, unique=True)
     code = models.CharField(max_length=20, unique=True, verbose_name='Código')
     name = models.CharField(max_length=150, unique=True, verbose_name='Nombre')
-    ref = models.CharField(
-        max_length=80, blank=True, null=True, default="", verbose_name=("Referencia")
-    )
-    flag = models.CharField(
-        max_length=80, blank=True, null=True, default="", verbose_name=("Grupo")
-    )
-    description = models.CharField(
-        max_length=500, null=True, blank=True, verbose_name='Descripción')
-    category = models.ForeignKey(
-        Category, on_delete=models.PROTECT, verbose_name='Categoría')
-    price = models.DecimalField(
-        max_digits=9, decimal_places=2, default=0.00, verbose_name='Precio de Compra')
-    pvp = models.DecimalField(
-        max_digits=9, decimal_places=2, default=0.00, verbose_name='Precio de Venta')
-    pvp1 = models.DecimalField(
-        max_digits=9, decimal_places=2, default=0.00, verbose_name='Precio 1')
-    pvp2 = models.DecimalField(
-        max_digits=9, decimal_places=2, default=0.00, verbose_name='Precio 2')
-    pvp3 = models.DecimalField(
-        max_digits=9, decimal_places=2, default=0.00, verbose_name='Precio 3')
+    ref = models.CharField(max_length=80, blank=True, null=True, default="", verbose_name='Referencia')
+    flag = models.CharField(max_length=80, blank=True, null=True, default="", verbose_name='Grupo')
+    description = models.CharField(max_length=500, null=True, blank=True, verbose_name='Descripción')
+    price_list = models.JSONField(default=dict, verbose_name='Precios de venta')
+    category = models.ForeignKey(Category, on_delete=models.PROTECT, verbose_name='Categoría')
+    price = models.DecimalField(max_digits=9, decimal_places=2, default=0.00, verbose_name='Precio de Compra')
+    pvp = models.DecimalField(max_digits=9, decimal_places=2, default=0.00, verbose_name='Precio de Venta')
+    pvp1 = models.DecimalField(max_digits=9, decimal_places=2, default=0.00, verbose_name='Precio 1')
+    pvp2 = models.DecimalField(max_digits=9, decimal_places=2, default=0.00, verbose_name='Precio 2')
+    pvp3 = models.DecimalField(max_digits=9, decimal_places=2, default=0.00, verbose_name='Precio 3')
     image = CustomImageField(null=True, blank=True, verbose_name='Imagen')
-    image_alterna = models.CharField(
-        max_length=500, null=True, default="", blank=True, verbose_name=("Imagen Alterna")
-    )
-    slug = models.SlugField(max_length=150, blank=True, verbose_name=("Url"))
-    barcode = CustomImageField(
-        folder='barcode', null=True, blank=True, verbose_name='Código de barra')
-    inventoried = models.BooleanField(
-        default=True, verbose_name='¿Es inventariado?')
+    image_alterna = models.CharField(max_length=500, null=True, default="", blank=True, verbose_name='Imagen Alterna')
+    slug = models.SlugField(max_length=150, blank=True, verbose_name='Url')
+    barcode = CustomImageField(folder='barcode', null=True, blank=True, verbose_name='Código de barra')
+    inventoried = models.BooleanField(default=True, verbose_name='¿Es inventariado?')
     stock = models.IntegerField(default=0)
     max_cant = models.IntegerField(default=0, verbose_name='Cantidad Max')
-    max_pvp = models.DecimalField(
-        max_digits=9, decimal_places=2, default=0.00, verbose_name='Precio max')
-    with_tax = models.BooleanField(
-        default=True, verbose_name='¿Se cobra impuesto?')
-    active = models.BooleanField(default=True, verbose_name=("Activo"))
-    soldout = models.BooleanField(default=False, verbose_name=("Agotado"))
-    offer = models.BooleanField(default=False, verbose_name=("Oferta"))
-    published = models.BooleanField(default=True, verbose_name=("Publico"))
-    home = models.BooleanField(default=False, verbose_name=("Exclusivo"))
-    created_date = models.DateTimeField(
-        auto_now_add=True, verbose_name=("Creado"))
-    modified_date = models.DateTimeField(
-        auto_now=True, verbose_name=("Modificado"))
+    max_pvp = models.DecimalField(max_digits=9, decimal_places=2, default=0.00, verbose_name='Precio max')
+    with_tax = models.BooleanField(default=True, verbose_name='¿Se cobra impuesto?')
+    active = models.BooleanField(default=True, verbose_name='Activo')
+    soldout = models.BooleanField(default=False, verbose_name='Agotado')
+    offer = models.BooleanField(default=False, verbose_name='Oferta')
+    published = models.BooleanField(default=True, verbose_name='Publico')
+    home = models.BooleanField(default=False, verbose_name='Exclusivo')
+    created_date = models.DateTimeField(auto_now_add=True, verbose_name='Creado')
+    modified_date = models.DateTimeField(auto_now=True, verbose_name='Modificado')
 
     def __str__(self):
         return self.get_full_name()
@@ -198,6 +180,12 @@ class Product(models.Model):
         self.barcode.save(filename, content=ContentFile(
             image_io.getvalue()), save=False)
 
+    def calculate_gross_price(self, price):
+        company = Company.objects.first()
+        if company:
+            return round(price / (1 + (float(company.iva) / 100)), 4)
+        return price
+
     def toJSON(self):
         item = model_to_dict(self)
         item['full_name'] = self.get_full_name()
@@ -214,6 +202,7 @@ class Product(models.Model):
         item['max_pvp'] = float(self.max_pvp)
         item['image'] = self.get_image()
         item['barcode'] = self.get_barcode()
+        item['price_list'] = self.price_list if self.price_list else []
         return item
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
@@ -225,6 +214,9 @@ class Product(models.Model):
 
         self.generate_barcode()
 
+        super(Product, self).save()
+
+    def edit(self):
         super(Product, self).save()
 
     class Meta:

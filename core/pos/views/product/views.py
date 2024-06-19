@@ -74,7 +74,14 @@ class ProductCreateView(GroupPermissionMixin, CreateView):
         action = request.POST['action']
         try:
             if action == 'add':
-                data = self.get_form().save()
+                form = self.get_form()
+                if form.is_valid():
+                    product = form.save()
+                    price_list = [{**item, 'gross_price': product.calculate_gross_price(float(item['net_price'])), 'net_price': float(item['net_price'])} for item in json.loads(request.POST['price_list'])]
+                    product.price_list = price_list
+                    product.edit()
+                else:
+                    data['error'] = form.errors
             elif action == 'validate_data':
                 data = {'valid': True}
                 queryset = Product.objects.all()
@@ -97,6 +104,7 @@ class ProductCreateView(GroupPermissionMixin, CreateView):
         context['title'] = 'Nuevo registro de un Producto'
         context['list_url'] = self.success_url
         context['action'] = 'add'
+        context['prices'] = []
         return context
 
 
@@ -116,7 +124,15 @@ class ProductUpdateView(GroupPermissionMixin, UpdateView):
         action = request.POST['action']
         try:
             if action == 'edit':
-                data = self.get_form().save()
+                form = self.get_form()
+                if form.is_valid():
+                    product = form.save()
+                    price_list = [{**item, 'gross_price': product.calculate_gross_price(float(item['net_price'])), 'net_price': float(item['net_price'])} for item in json.loads(request.POST['price_list'])]
+                    print(price_list)
+                    product.price_list = price_list
+                    product.edit()
+                else:
+                    data['error'] = form.errors
             elif action == 'validate_data':
                 data = {'valid': True}
                 id = self.get_object().id
@@ -140,6 +156,7 @@ class ProductUpdateView(GroupPermissionMixin, UpdateView):
         context['title'] = 'Edición de un Producto'
         context['list_url'] = self.success_url
         context['action'] = 'edit'
+        context['prices'] = json.dumps(self.object.price_list) if self.object.price_list else []
         return context
 
 

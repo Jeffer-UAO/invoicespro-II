@@ -68,7 +68,7 @@ class CategoryForm(forms.ModelForm):
 class ProductForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['name'].widget.attrs['autofocus'] = True
+        self.fields['code'].widget.attrs['autofocus'] = True
 
     class Meta:
         model = Product
@@ -76,6 +76,10 @@ class ProductForm(forms.ModelForm):
         widgets = {
             'name': forms.TextInput(attrs={'placeholder': 'Ingrese un nombre'}),
             'code': forms.TextInput(attrs={'placeholder': 'Ingrese un código'}),
+            'ref': forms.TextInput(attrs={'placeholder': 'Ingrese una referencia'}),
+            'flag': forms.TextInput(attrs={'placeholder': 'Ingrese un grupo'}),
+            'image_alterna': forms.TextInput(attrs={'placeholder': 'Ingrese una URL'}),
+            'slug': forms.TextInput(attrs={'placeholder': 'Ingrese una URL'}),
             'description': forms.Textarea(attrs={'placeholder': 'Ingrese una descripción', 'rows': 3, 'cols': 3}),
             'category': forms.Select(attrs={'class': 'form-control select2', 'style': 'width: 100%;'}),
             'price': forms.TextInput(),
@@ -84,18 +88,7 @@ class ProductForm(forms.ModelForm):
             'pvp2': forms.TextInput(),
             'pvp3': forms.TextInput(),
         }
-        exclude = ['stock', 'barcode']
-
-    def save(self, commit=True):
-        data = {}
-        try:
-            if self.is_valid():
-                super().save()
-            else:
-                data['error'] = self.errors
-        except Exception as e:
-            data['error'] = str(e)
-        return data
+        exclude = ['stock', 'barcode', 'pvp', 'pvp1', 'pvp2', 'pvp3', 'max_pvp', 'max_cant', 'price_list']
 
 
 class PurchaseForm(forms.ModelForm):

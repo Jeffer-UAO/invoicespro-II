@@ -1,5 +1,78 @@
 var fv;
 var input_inventoried;
+var tblPrices;
+
+var product = {
+    prices: [],
+    listPrices: function () {
+        tblPrices = $('#tblPrices').DataTable({
+            autoWidth: false,
+            destroy: true,
+            data: this.prices,
+            ordering: false,
+            lengthChange: false,
+            searching: false,
+            paginate: false,
+            info: false,
+            columns: [
+                {data: "quantity"},
+                {data: "quantity"},
+                {data: "net_price"},
+            ],
+            columnDefs: [
+                {
+                    targets: [0],
+                    class: 'text-center',
+                    render: function (data, type, row) {
+                        return '<a rel="remove" class="btn btn-danger btn-flat btn-xs"><i class="fas fa-times"></i></a>';
+                    }
+                },
+                {
+                    targets: [-2],
+                    class: 'text-center',
+                    render: function (data, type, row) {
+                        return '<input type="text" class="form-control" autocomplete="off" name="quantity" value="' + row.quantity + '">';
+                    }
+                },
+                {
+                    targets: [-1],
+                    class: 'text-center',
+                    render: function (data, type, row) {
+                        return '<input type="text" class="form-control" autocomplete="off" name="net_price" value="' + row.net_price + '">';
+                    }
+                }
+            ],
+            rowCallback: function (row, data, index) {
+                var tr = $(row).closest('tr');
+                tr.find('input[name="quantity"]')
+                    .TouchSpin({
+                        min: 0,
+                        max: 1000000,
+                        step: 1
+                    })
+                    .on('keypress', function (e) {
+                        return validate_text_box({'event': e, 'type': 'numbers'});
+                    });
+
+                tr.find('input[name="net_price"]')
+                    .TouchSpin({
+                        min: 0.00,
+                        max: 1000000,
+                        step: 0.01,
+                        decimals: 2,
+                        boostat: 5,
+                        maxboostedstep: 1,
+                    })
+                    .on('keypress', function (e) {
+                        return validate_text_box({'event': e, 'type': 'decimals'});
+                    });
+            },
+            initComplete: function (settings, json) {
+                $(this).wrap('<div class="dataTables_scroll"><div/>');
+            }
+        });
+    }
+};
 
 document.addEventListener('DOMContentLoaded', function (e) {
     fv = FormValidation.formValidation(document.getElementById('frmForm'), {
@@ -61,6 +134,22 @@ document.addEventListener('DOMContentLoaded', function (e) {
                                 'X-CSRFToken': csrftoken
                             },
                         }
+                    }
+                },
+                ref: {
+                    validators: {
+                        // notEmpty: {},
+                        // stringLength: {
+                        //     min: 2
+                        // }
+                    }
+                },
+                flag: {
+                    validators: {
+                        // notEmpty: {},
+                        // stringLength: {
+                        //     min: 2
+                        // }
                     }
                 },
                 category: {
@@ -134,8 +223,10 @@ document.addEventListener('DOMContentLoaded', function (e) {
             }
         })
         .on('core.form.valid', function () {
+            var params = new FormData(fv.form);
+            params.append('price_list', JSON.stringify(tblPrices.rows().data().toArray()));
             var args = {
-                'params': new FormData(fv.form),
+                'params': params,
                 'form': fv.form
             };
             submit_with_formdata(args);
@@ -208,6 +299,32 @@ $(function () {
         .on('keyup', function (e) {
             var value = $(this).val();
             $(this).val(value.toUpperCase());
+        });
+
+    // Prices
+
+    $('.btnCreatePrice').on('click', function () {
+        product.prices.push({'quantity': 1, 'net_price': 0.00});
+        product.listPrices();
+    });
+
+    $('#tblPrices tbody')
+        .off()
+        .on('click', 'a[rel="remove"]', function () {
+            var tr = tblPrices.cell($(this).closest('td, li')).index();
+            product.prices.splice(tr.row, 1);
+            tblPrices.row(tr.row).remove().draw();
+            $('.tooltip').remove();
+        })
+        .on('change', 'input[name="quantity"]', function () {
+            var tr = tblPrices.cell($(this).closest('td, li')).index();
+            var data = tblPrices.row(tr.row).data();
+            data.quantity = parseInt($(this).val());
+        })
+        .on('change', 'input[name="net_price"]', function () {
+            var tr = tblPrices.cell($(this).closest('td, li')).index();
+            var data = tblPrices.row(tr.row).data();
+            data.net_price = $(this).val();
         });
 
     $('i[data-field="price"]').hide();
