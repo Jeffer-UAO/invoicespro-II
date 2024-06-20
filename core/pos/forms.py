@@ -95,6 +95,7 @@ class PurchaseForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['provider'].queryset = Provider.objects.none()
+        self.fields['date_joined'].initial = datetime.now().astimezone().date()
 
     class Meta:
         model = Purchase
@@ -106,7 +107,7 @@ class PurchaseForm(forms.ModelForm):
             'date_joined': forms.DateInput(format='%Y-%m-%d', attrs={
                 'class': 'form-control datetimepicker-input',
                 'id': 'date_joined',
-                'value': datetime.now().strftime('%Y-%m-%d'),
+                'value': datetime.now().astimezone().strftime('%Y-%m-%d'),
                 'data-toggle': 'datetimepicker',
                 'data-target': '#date_joined'
             }),
@@ -274,6 +275,7 @@ class SaleForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['client'].queryset = Client.objects.none()
         self.fields['receipt'].empty_label = None
+        self.fields['date_joined'].initial = datetime.now().astimezone().date()
 
     class Meta:
         model = Sale

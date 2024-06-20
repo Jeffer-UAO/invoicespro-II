@@ -29,8 +29,10 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         try:
             if action == 'get_graph_stock_products':
                 data = []
-                for i in Product.objects.filter(stock__gt=0).order_by('-stock')[0:10]:
-                    data.append([i.name, i.stock])
+                for i in Product.objects.filter():
+                    if i.stock:
+                        data.append([i.name, i.stock])
+                data = sorted(data, key=lambda x: x[1])[0:10]
             elif action == 'get_graph_purchase_vs_sale':
                 data = []
                 year = datetime.now().year

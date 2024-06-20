@@ -337,6 +337,9 @@ class Inventory(models.Model):
     def __str__(self):
         return self.product.name
 
+    def get_full_name(self):
+        return f'{self.id} - {self.product.get_full_name()}'
+
     def days_to_expire(self):
         if self.expiration_date:
             return (self.expiration_date - datetime.now().date()).days
@@ -359,6 +362,20 @@ class Inventory(models.Model):
         verbose_name_plural = 'Inventarios'
         default_permissions = ()
         ordering = ('expiration_date', 'date_joined')
+
+
+class PurchaseDetailInventory(models.Model):
+    inventory = models.ForeignKey(Inventory, on_delete=models.CASCADE)
+    purchase_detail = models.ForeignKey(PurchaseDetail, on_delete=models.CASCADE)
+    quantity = models.IntegerField(default=0)
+
+    def __str__(self):
+        return self.inventory.product.name
+
+    class Meta:
+        verbose_name = 'Detalle de Compra Inventario'
+        verbose_name_plural = 'Detalle de Compra Inventarios'
+        default_permissions = ()
 
 
 class Client(models.Model):
@@ -1470,7 +1487,7 @@ class SaleDetailInventory(models.Model):
 
     class Meta:
         verbose_name = 'Detalle de Venta Inventario'
-        verbose_name_plural = 'Detalle de VentaInventarios'
+        verbose_name_plural = 'Detalle de Venta Inventarios'
         default_permissions = ()
 
 

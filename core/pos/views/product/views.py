@@ -198,20 +198,22 @@ class ProductStockAdjustmentView(GroupPermissionMixin, TemplateView):
                 data = []
                 ids = json.loads(request.POST['ids'])
                 term = request.POST['term']
-                queryset = Product.objects.filter(inventoried=True).exclude(id__in=ids).order_by('name')
+                queryset = Inventory.objects.filter(active=True).exclude(id__in=ids).order_by('product__name')
                 if len(term):
-                    queryset = queryset.filter(Q(name__icontains=term) | Q(code__icontains=term))
+                    queryset = queryset.filter(Q(product__name__icontains=term) | Q(product__code__icontains=term))
                     queryset = queryset[0:10]
                 for i in queryset:
                     item = i.toJSON()
+                    item['product'] = i.product.toJSON()
                     item['value'] = i.get_full_name()
                     data.append(item)
             elif action == 'create':
                 with transaction.atomic():
                     for i in json.loads(request.POST['products']):
-                        product = Product.objects.get(pk=i['id'])
-                        product.stock = int(i['newstock'])
-                        product.save()
+                        inventory = Inventory.objects.get(pk=i['id'])
+                        inventory.quantity = int(i['newstock'])
+                        inventory.saldo = int(i['newstock'])
+                        inventory.save()
             else:
                 data['error'] = 'No ha seleccionado ninguna opción'
         except Exception as e:

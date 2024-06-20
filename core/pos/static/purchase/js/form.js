@@ -638,7 +638,7 @@ $(function () {
         keepOpen: false
     });
 
-    input_date_joined.datetimepicker('date', input_date_joined.val());
+    // input_date_joined.datetimepicker('date', input_date_joined.val());
 
     input_date_joined.on('change.datetimepicker', function (e) {
         fvPurchase.revalidateField('date_joined');

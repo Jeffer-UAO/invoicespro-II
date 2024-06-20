@@ -180,7 +180,7 @@ class SaleCreateView(GroupPermissionMixin, ValidateInvoicePlanMixin, CreateView)
                                 if quantity == 0:
                                     break
                                 if inventory.saldo >= quantity:
-                                    SaleDetailInventory.objects.create(sale_detail_id=detail.id, inventory_id=inventory.id, quantity=inventory.saldo)
+                                    SaleDetailInventory.objects.create(sale_detail_id=detail.id, inventory_id=inventory.id, quantity=quantity)
                                     inventory.saldo -= quantity
                                     inventory.save()
                                     quantity = 0
@@ -365,12 +365,13 @@ class SaleUpdateView(GroupPermissionMixin, UpdateView):
                         sale.cash = 0.00
                         sale.change = 0.00
                     sale.save()
-                    for detail in sale.saledetail_set.all():
-                        if detail.product.inventoried:
-                            detail.product.stock += detail.cant
-                            detail.product.save()
+                    for detail in SaleDetailInventory.objects.filter(sale_detail__sale_id=sale.id):
+                        detail.inventory.saldo += detail.quantity
+                        detail.inventory.save()
+                        detail.sale_detail.delete()
                         detail.delete()
                     for i in json.loads(request.POST['products']):
+                        quantity = int(i['cant'])
                         product = Product.objects.get(pk=i['id'])
                         detail = SaleDetail()
                         detail.sale_id = sale.id
@@ -379,9 +380,20 @@ class SaleUpdateView(GroupPermissionMixin, UpdateView):
                         detail.price = float(i['price_current'])
                         detail.dscto = float(i['dscto']) / 100
                         detail.save()
-                        if detail.product.inventoried:
-                            detail.product.stock -= detail.cant
-                            detail.product.save()
+                        if product.inventoried:
+                            for inventory in Inventory.objects.filter(product_id=product.id, saldo__gt=0, active=True).order_by('expiration_date', 'date_joined'):
+                                if quantity == 0:
+                                    break
+                                if inventory.saldo >= quantity:
+                                    SaleDetailInventory.objects.create(sale_detail_id=detail.id, inventory_id=inventory.id, quantity=quantity)
+                                    inventory.saldo -= quantity
+                                    inventory.save()
+                                    quantity = 0
+                                else:
+                                    SaleDetailInventory.objects.create(sale_detail_id=detail.id, inventory_id=inventory.id, quantity=inventory.saldo)
+                                    quantity -= inventory.saldo
+                                    inventory.saldo = 0
+                                    inventory.save()
                     sale.calculate_detail()
                     sale.calculate_invoice()
                     if sale.payment_type == PAYMENT_TYPE[1][0]:

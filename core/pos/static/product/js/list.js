@@ -50,9 +50,9 @@ var product = {
                     class: "text-center",
                     render: function (data, type, row) {
                         if (data <= 0) {
-                            return '<a rel="inventory" class="btn btn-danger btn-xs">0</a>';
+                            return '<a rel="inventory" class="btn btn-danger btn-xs"><i class="fas fa-boxes"></i> 0</a>';
                         }
-                        return '<a rel="inventory" class="btn btn-success btn-xs">' + data + '</a>';
+                        return '<a rel="inventory" class="btn btn-success btn-xs"><i class="fas fa-boxes"></i> ' + data + '</a>';
                     },
                 },
                 {

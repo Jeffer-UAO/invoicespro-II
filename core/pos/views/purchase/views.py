@@ -8,7 +8,7 @@ from django.urls import reverse_lazy
 from django.views.generic import CreateView, DeleteView, FormView, UpdateView
 
 from core.pos.forms import PurchaseForm, Purchase, PurchaseDetail, Product, Provider, DebtsPay, ProviderForm, PAYMENT_TYPE
-from core.pos.models import Inventory
+from core.pos.models import Inventory, PurchaseDetailInventory
 from core.reports.forms import ReportForm
 from core.security.mixins import GroupPermissionMixin
 
@@ -77,14 +77,8 @@ class PurchaseCreateView(GroupPermissionMixin, CreateView):
                         detail.price = float(i['price'])
                         detail.subtotal = detail.cant * float(detail.price)
                         detail.save()
-
-                        inventory = Inventory()
-                        inventory.product_id = product.id
-                        if product.has_expiration_date:
-                            inventory.expiration_date = i['expiration_date']
-                        inventory.quantity = detail.cant
-                        inventory.saldo = detail.cant
-                        inventory.save()
+                        inventory = Inventory.objects.create(product_id=product.id, expiration_date=i['expiration_date'] if product.has_expiration_date else None, quantity=detail.cant, saldo=detail.cant)
+                        PurchaseDetailInventory.objects.create(purchase_detail_id=detail.id, inventory_id=inventory.id, quantity=inventory.saldo)
 
                     purchase.calculate_invoice()
 
@@ -166,9 +160,10 @@ class PurchaseUpdateView(GroupPermissionMixin, UpdateView):
 
     def get_products(self):
         data = []
-        for detail in self.object.purchasedetail_set.all():
-            product = detail.product.toJSON()
-            product['cant'] = detail.cant
+        for detail in PurchaseDetailInventory.objects.filter(purchase_detail__purchase_id=self.object.id):
+            product = detail.inventory.product.toJSON()
+            product['expiration_date'] = detail.inventory.expiration_date.strftime('%Y-%m-%d') if detail.inventory.expiration_date else datetime.now().date().strftime('%Y-%m-%d')
+            product['cant'] = detail.quantity
             data.append(product)
         return json.dumps(data)
 
@@ -188,10 +183,9 @@ class PurchaseUpdateView(GroupPermissionMixin, UpdateView):
                     purchase.payment_type = request.POST['payment_type']
                     purchase.date_joined = request.POST['date_joined']
                     purchase.save()
-                    for detail in purchase.purchasedetail_set.all():
-                        detail.product.stock -= detail.cant
-                        detail.product.save()
-                        detail.delete()
+                    for purchase_inventory in PurchaseDetailInventory.objects.filter(purchase_detail__purchase_id=purchase.id):
+                        purchase_inventory.inventory.delete()
+                        purchase_inventory.delete()
                     for i in json.loads(request.POST['products']):
                         product = Product.objects.get(pk=i['id'])
                         detail = PurchaseDetail()
@@ -201,8 +195,8 @@ class PurchaseUpdateView(GroupPermissionMixin, UpdateView):
                         detail.price = float(i['price'])
                         detail.subtotal = detail.cant * float(detail.price)
                         detail.save()
-                        detail.product.stock += detail.cant
-                        detail.product.save()
+                        inventory = Inventory.objects.create(product_id=product.id, expiration_date=i['expiration_date'] if product.has_expiration_date else None, quantity=detail.cant, saldo=detail.cant)
+                        PurchaseDetailInventory.objects.create(purchase_detail_id=detail.id, inventory_id=inventory.id, quantity=inventory.saldo)
 
                     purchase.calculate_invoice()
 
@@ -226,6 +220,7 @@ class PurchaseUpdateView(GroupPermissionMixin, UpdateView):
                     queryset = queryset[0:10]
                 for i in queryset:
                     item = i.toJSON()
+                    item['expiration_date'] = datetime.now().date().strftime('%Y-%m-%d')
                     item['value'] = i.get_full_name()
                     data.append(item)
             elif action == 'search_provider':

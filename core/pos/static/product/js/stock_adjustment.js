@@ -21,9 +21,11 @@ var inventory = {
             paginate: false,
             columns: [
                 {data: "id"},
-                {data: "code"},
-                {data: "full_name"},
-                {data: "stock"},
+                {data: "date_joined"},
+                {data: "product.full_name"},
+                {data: "expiration_date"},
+                {data: "quantity"},
+                {data: "saldo"},
                 {data: "newstock"},
             ],
             columnDefs: [
@@ -35,7 +37,7 @@ var inventory = {
                     }
                 },
                 {
-                    targets: [-2],
+                    targets: [-2, -3],
                     class: 'text-center',
                     render: function (data, type, row) {
                         return data;
@@ -101,7 +103,7 @@ $(function () {
         select: function (event, ui) {
             event.preventDefault();
             $(this).blur();
-            ui.item.newstock = ui.item.stock;
+            ui.item.newstock = ui.item.saldo;
             inventory.addProduct(ui.item);
             $(this).val('').focus();
         }
@@ -142,20 +144,19 @@ $(function () {
                 dataSrc: ""
             },
             columns: [
-                {data: "code"},
-                {data: "full_name"},
-                {data: "stock"},
+                {data: "date_joined"},
+                {data: "product.full_name"},
+                {data: "expiration_date"},
+                {data: "quantity"},
+                {data: "saldo"},
                 {data: "id"},
             ],
             columnDefs: [
                 {
-                    targets: [-2],
+                    targets: [-2, -3, -4],
                     class: 'text-center',
                     render: function (data, type, row) {
-                        if (row.stock > 0) {
-                            return '<span class="badge badge-success badge-pill">' + data + '</span>'
-                        }
-                        return '<span class="badge badge-warning badge-pill">' + data + '</span>'
+                        return data;
                     }
                 },
                 {
