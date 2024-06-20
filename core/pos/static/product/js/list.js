@@ -46,13 +46,13 @@ var product = {
                     },
                 },
                 {
-                    targets: [-6],
+                    targets: [-2],
                     class: "text-center",
                     render: function (data, type, row) {
                         if (data <= 0) {
-                            return '<span class="badge badge-danger badge-pill">0</span>';
+                            return '<a rel="inventory" class="btn btn-danger btn-xs">0</a>';
                         }
-                        return '<span class="badge badge-success badge-pill">' + data + '</span>';
+                        return '<a rel="inventory" class="btn btn-success btn-xs">' + data + '</a>';
                     },
                 },
                 {
@@ -75,42 +75,11 @@ var product = {
                     },
                 },
                 {
-                    targets: [-2],
-                    class: "text-center",
-                    render: function (data, type, row) {
-                        if (row.inventoried) {
-                            if (row.stock > 0) {
-                                return (
-                                    '<span class="badge badge-success badge-pill">' +
-                                    row.stock +
-                                    "</span>"
-                                );
-                            }
-                            return (
-                                '<span class="badge badge-danger badge-pill">' +
-                                row.stock +
-                                "</span>"
-                            );
-                        }
-                        return '<span class="badge badge-secondary badge-pill">Sin stock</span>';
-                    },
-                },
-                {
                     targets: [-1],
                     class: "text-center",
                     render: function (data, type, row) {
-                        var buttons =
-                            '<a href="' +
-                            pathname +
-                            "update/" +
-                            row.id +
-                            '/" data-toggle="tooltip" title="Editar" class="btn btn-warning btn-xs btn-flat"><i class="fas fa-edit"></i></a> ';
-                        buttons +=
-                            '<a href="' +
-                            pathname +
-                            "delete/" +
-                            row.id +
-                            '/" data-toggle="tooltip" title="Eliminar" class="btn btn-danger btn-xs btn-flat"><i class="fas fa-trash"></i></a>';
+                        var buttons = '<a href="' + pathname + 'update/' + row.id + '/" data-toggle="tooltip" title="Editar" class="btn btn-warning btn-xs btn-flat"><i class="fas fa-edit"></i></a> ';
+                        buttons += '<a href="' + pathname + 'delete/' + row.id + '/" data-toggle="tooltip" title="Eliminar" class="btn btn-danger btn-xs btn-flat"><i class="fas fa-trash-alt"></i></a>';
                         return buttons;
                     },
                 },
@@ -134,10 +103,11 @@ $(function () {
         .off()
         .on("click", 'a[rel="inventory"]', function () {
             var tr = tblProducts.cell($(this).closest("td, li")).index();
-            var data = tblProducts.row(tr.row).data();
+            var row = tblProducts.row(tr.row).data();
             $('#tblInventory').DataTable({
                 autoWidth: false,
                 destroy: true,
+                order: [[3, 'asc'], [0, 'asc']],
                 ajax: {
                     url: pathname,
                     type: 'POST',
@@ -145,7 +115,7 @@ $(function () {
                         'X-CSRFToken': csrftoken
                     },
                     data: {
-                        'action': 'search_detail_products',
+                        'action': 'search_inventory',
                         'id': row.id
                     },
                     dataSrc: ""
@@ -155,20 +125,14 @@ $(function () {
                     {data: "quantity"},
                     {data: "saldo"},
                     {data: "expiration_date"},
+                    {data: "days_to_expire"},
                 ],
                 columnDefs: [
                     {
-                        targets: [-1, -3],
+                        targets: [-1, -2, -3, -4, 0],
                         class: 'text-center',
                         render: function (data, type, row) {
-                            return '$' + data.toFixed(2);
-                        }
-                    },
-                    {
-                        targets: [-2],
-                        class: 'text-center',
-                        render: function (data, type, row) {
-                            return data.toFixed(2);
+                            return data;
                         }
                     }
                 ],
@@ -176,7 +140,7 @@ $(function () {
                     $(this).wrap('<div class="dataTables_scroll"><div/>');
                 }
             });
-            $('#myModalDetails').modal('show');
+            $('#myModalInventory').modal('show');
         })
         .on("click", 'a[rel="image"]', function () {
             var tr = tblProducts.cell($(this).closest("td, li")).index();

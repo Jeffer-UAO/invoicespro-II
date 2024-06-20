@@ -14,6 +14,7 @@ from django.views.generic.base import View
 from openpyxl import load_workbook
 
 from core.pos.forms import ProductForm, Product, Category
+from core.pos.models import Inventory
 from core.security.mixins import GroupPermissionMixin
 
 
@@ -28,6 +29,10 @@ class ProductListView(GroupPermissionMixin, TemplateView):
             if action == 'search':
                 data = []
                 for i in Product.objects.filter():
+                    data.append(i.toJSON())
+            elif action == 'search_inventory':
+                data = []
+                for i in Inventory.objects.filter(product_id=request.POST['id'], active=True).order_by('expiration_date', 'date_joined'):
                     data.append(i.toJSON())
             elif action == 'upload_excel':
                 with transaction.atomic():

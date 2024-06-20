@@ -6,14 +6,15 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import Group
 from django.db import transaction
 from django.db.models import Q
-from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse_lazy
 from django.views import View
 from django.views.generic import CreateView, DeleteView, FormView, UpdateView
 
 from config import settings
-from core.pos.forms import SaleProduct, SaleForm, ClientForm, ClientUserForm, Sale, SaleDetail, Client, Product, Receipt, CreditNote, CreditNoteDetail, CtasCollect, INVOICE_STATUS, PAYMENT_TYPE, VOUCHER_TYPE
+from core.pos.forms import SaleForm, ClientForm, ClientUserForm, Sale, SaleDetail, Client, Product, Receipt, CreditNote, CreditNoteDetail, CtasCollect, INVOICE_STATUS, PAYMENT_TYPE, VOUCHER_TYPE
 from core.pos.mixins import ValidateInvoicePlanMixin
+from core.pos.models import Inventory, SaleDetailInventory
 from core.pos.utilities import printer
 from core.pos.utilities.sri import SRI
 from core.reports.forms import ReportForm
@@ -165,17 +166,29 @@ class SaleCreateView(GroupPermissionMixin, ValidateInvoicePlanMixin, CreateView)
                         sale.change = 0.00
                     sale.save()
                     for i in json.loads(request.POST['products']):
+                        quantity = int(i['cant'])
                         product = Product.objects.get(pk=i['id'])
                         detail = SaleDetail()
                         detail.sale_id = sale.id
                         detail.product_id = product.id
-                        detail.cant = int(i['cant'])
+                        detail.cant = quantity
                         detail.price = float(i['price_current'])
                         detail.dscto = float(i['dscto']) / 100
                         detail.save()
-                        if detail.product.inventoried:
-                            detail.product.stock -= detail.cant
-                            detail.product.save()
+                        if product.inventoried:
+                            for inventory in Inventory.objects.filter(product_id=product.id, saldo__gt=0, active=True).order_by('expiration_date', 'date_joined'):
+                                if quantity == 0:
+                                    break
+                                if inventory.saldo >= quantity:
+                                    SaleDetailInventory.objects.create(sale_detail_id=detail.id, inventory_id=inventory.id, quantity=inventory.saldo)
+                                    inventory.saldo -= quantity
+                                    inventory.save()
+                                    quantity = 0
+                                else:
+                                    SaleDetailInventory.objects.create(sale_detail_id=detail.id, inventory_id=inventory.id, quantity=inventory.saldo)
+                                    quantity -= inventory.saldo
+                                    inventory.saldo = 0
+                                    inventory.save()
                     sale.calculate_detail()
                     sale.calculate_invoice()
                     if sale.payment_type == PAYMENT_TYPE[1][0]:
@@ -198,18 +211,19 @@ class SaleCreateView(GroupPermissionMixin, ValidateInvoicePlanMixin, CreateView)
                 ids = json.loads(request.POST['ids'])
                 data = []
                 term = request.POST['term']
-                queryset = Product.objects.filter(Q(stock__gt=0) | Q(inventoried=False)).exclude(id__in=ids).order_by('name')
+                queryset = Product.objects.filter().exclude(id__in=ids).order_by('name')
                 if len(term):
                     queryset = queryset.filter(Q(name__icontains=term) | Q(code__icontains=term))
                     queryset = queryset[:10]
                 for i in queryset:
-                    item = i.toJSON()
-                    item['price_list'] = i.get_price_list()
-                    item['pvp'] = float(i.pvp)
-                    item['value'] = i.get_full_name()
-                    item['dscto'] = 0.00
-                    item['total_dscto'] = 0.00
-                    data.append(item)
+                    if i.stock > 0 or not i.inventoried:
+                        item = i.toJSON()
+                        item['price_list'] = i.get_price_list()
+                        item['pvp'] = float(i.pvp)
+                        item['value'] = i.get_full_name()
+                        item['dscto'] = 0.00
+                        item['total_dscto'] = 0.00
+                        data.append(item)
             elif action == 'search_product_code':
                 data = {}
                 code = request.POST['code']

@@ -343,7 +343,10 @@ class Inventory(models.Model):
         return 0
 
     def toJSON(self):
-        item = model_to_dict(self)
+        item = model_to_dict(self, exclude=['product'])
+        item['date_joined'] = self.date_joined.strftime('%Y-%m-%d')
+        item['expiration_date'] = self.expiration_date.strftime('%Y-%m-%d') if self.expiration_date else '---'
+        item['days_to_expire'] = self.days_to_expire()
         return item
 
     def save(self, force_insert=False, force_update=False, using=None,
@@ -355,6 +358,7 @@ class Inventory(models.Model):
         verbose_name = 'Inventario'
         verbose_name_plural = 'Inventarios'
         default_permissions = ()
+        ordering = ('expiration_date', 'date_joined')
 
 
 class Client(models.Model):
@@ -1370,10 +1374,11 @@ class Sale(models.Model):
 
     def delete(self, using=None, keep_parents=False):
         try:
-            for i in self.saledetail_set.filter(product__inventoried=True):
-                i.product.stock += i.cant
-                i.product.save()
-                i.delete()
+            for detail in self.saledetail_set.filter(product__inventoried=True):
+                for detail_inventory in detail.saledetailinventory_set.all():
+                    detail_inventory.inventory.saldo += detail_inventory.quantity
+                    detail_inventory.inventory.save()
+                detail.delete()
         except:
             pass
         super(Sale, self).delete()
@@ -1452,6 +1457,20 @@ class SaleDetail(models.Model):
     class Meta:
         verbose_name = 'Detalle de Venta'
         verbose_name_plural = 'Detalle de Ventas'
+        default_permissions = ()
+
+
+class SaleDetailInventory(models.Model):
+    inventory = models.ForeignKey(Inventory, on_delete=models.CASCADE)
+    sale_detail = models.ForeignKey(SaleDetail, on_delete=models.CASCADE)
+    quantity = models.IntegerField(default=0)
+
+    def __str__(self):
+        return self.inventory.product.name
+
+    class Meta:
+        verbose_name = 'Detalle de Venta Inventario'
+        verbose_name_plural = 'Detalle de VentaInventarios'
         default_permissions = ()
 
 

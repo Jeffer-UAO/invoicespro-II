@@ -113,7 +113,8 @@ class PurchaseCreateView(GroupPermissionMixin, CreateView):
                     data.append(item)
             elif action == 'search_provider':
                 data = []
-                for i in Provider.objects.filter(name__icontains=request.POST['term']).order_by('name')[0:10]:
+                term = request.POST['term']
+                for i in Provider.objects.filter(Q(first_name__icontains=term) | Q(last_name__icontains=term) | Q(ruc__icontains=term)).order_by('name')[0:10]:
                     data.append(i.toJSON())
             elif action == 'validate_provider':
                 data = {'valid': True}
