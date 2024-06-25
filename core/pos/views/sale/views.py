@@ -415,19 +415,19 @@ class SaleUpdateView(GroupPermissionMixin, UpdateView):
                 ids = json.loads(request.POST['ids'])
                 data = []
                 term = request.POST['term']
-                queryset = Product.objects.filter(Q(stock__gt=0) | Q(
-                    inventoried=False)).exclude(id__in=ids).order_by('name')
+                queryset = Product.objects.filter().exclude(id__in=ids).order_by('name')
                 if len(term):
-                    queryset = queryset.filter(
-                        Q(name__icontains=term) | Q(code__icontains=term))
+                    queryset = queryset.filter(Q(name__icontains=term) | Q(code__icontains=term))
                     queryset = queryset[:10]
                 for i in queryset:
-                    item = i.toJSON()
-                    item['pvp'] = float(i.pvp)
-                    item['value'] = i.get_full_name()
-                    item['dscto'] = 0.00
-                    item['total_dscto'] = 0.00
-                    data.append(item)
+                    if i.stock > 0 or not i.inventoried:
+                        item = i.toJSON()
+                        item['price_list'] = i.get_price_list()
+                        item['pvp'] = float(i.pvp)
+                        item['value'] = i.get_full_name()
+                        item['dscto'] = 0.00
+                        item['total_dscto'] = 0.00
+                        data.append(item)
             elif action == 'search_product_code':
                 data = {}
                 code = request.POST['code']
@@ -435,6 +435,7 @@ class SaleUpdateView(GroupPermissionMixin, UpdateView):
                     product = Product.objects.filter(code=code).first()
                     if product:
                         data = product.toJSON()
+                        data['price_list'] = product.get_price_list()
                         data['dscto'] = 0.00
                         data['total_dscto'] = 0.00
             elif action == 'search_client':
