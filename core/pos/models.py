@@ -461,7 +461,7 @@ class Sale(models.Model):
     client = models.ForeignKey(
         Client, on_delete=models.PROTECT, verbose_name='Cliente')
     receipt = models.ForeignKey(Receipt, on_delete=models.PROTECT, limit_choices_to={
-        'code__in': [VOUCHER_TYPE[0][0], VOUCHER_TYPE[-1][0]]}, verbose_name='Tipo de comprobante')
+        'code__in': [VOUCHER_TYPE[-1][0]]}, verbose_name='Tipo de comprobante')
     voucher_number = models.CharField(
         max_length=9, verbose_name='Número de comprobante')
     voucher_number_full = models.CharField(

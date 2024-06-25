@@ -82,9 +82,10 @@ var sale = {
         $('input[name="total_iva"]').val(this.detail.total_iva.toFixed(2));
         $('input[name="total_dscto"]').val(this.detail.total_dscto.toFixed(2));
         $('input[name="total"]').val(this.detail.total.toFixed(2));
-        if (select_payment_type.val() === "efectivo") {
-            input_cash.trigger("change");
-        }
+        input_cash.val(this.detail.total.toFixed(2));
+        // if (select_payment_type.val() === "efectivo") {
+        //     input_cash.trigger("change");
+        // }
     },
     searchProductPrice: function (product) {
         const validPrices = product.price_list.filter(price => product.cant >= price.quantity);
@@ -216,7 +217,7 @@ var sale = {
             (value) => value.code === item.code
         );
         if (index === -1) {
-            this.detail.products.push(item);
+            this.detail.products.unshift(item);
         } else {
             var product = this.detail.products[index];
             if (product.cant + 1 <= product.stock || !product.inventoried) {

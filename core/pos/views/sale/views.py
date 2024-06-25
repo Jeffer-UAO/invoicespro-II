@@ -110,7 +110,7 @@ class SaleCreateView(GroupPermissionMixin, ValidateInvoicePlanMixin, CreateView)
     permission_required = 'add_sale'
 
     def get_first_final_consumer(self):
-        client = Client.objects.filter(dni='9999999999999').first()
+        client = Client.objects.filter().first()
         return client.toJSON() if client else dict()
 
     def get(self, request, *args, **kwargs):
@@ -120,8 +120,7 @@ class SaleCreateView(GroupPermissionMixin, ValidateInvoicePlanMixin, CreateView)
         queryset = Sale.objects.filter(date_joined__year=current_date.year,
                                        date_joined__month=current_date.month, receipt__code=VOUCHER_TYPE[0][0])
         if queryset.count() >= request.tenant.company.plan.quantity:
-            messages.error(
-                request, f'Tu plan {request.tenant.company.plan.name} solo te permite {request.tenant.company.plan.quantity} facturas al mes y ya has superado el limite permitido')
+            messages.error(request, f'Tu plan {request.tenant.company.plan.name} solo te permite {request.tenant.company.plan.quantity} facturas al mes y ya has superado el limite permitido')
             return HttpResponseRedirect(self.success_url)
         return super().get(request, *args, **kwargs)
 
