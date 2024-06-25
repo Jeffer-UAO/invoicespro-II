@@ -60,7 +60,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
                 'params': params,
                 'success': function (request) {
                     alert_sweetalert({
-                        'text': 'Productos actualizados correctamente',
+                        'message': 'Productos actualizados correctamente',
                         'timer': 2000,
                         'callback': function () {
                             location.reload();

@@ -138,6 +138,18 @@ class Product(models.Model):
     def stock(self):
         return self.inventory_set.filter(active=True).aggregate(result=Coalesce(Sum('saldo'), 0, output_field=IntegerField())).get('result', 0)
 
+    @property
+    def prices_quantity(self):
+        if self.price_list and isinstance(self.price_list, list):
+            return ','.join([str(price['quantity']) for price in self.price_list])
+        return ''
+
+    @property
+    def prices_amount(self):
+        if self.price_list and isinstance(self.price_list, list):
+            return ','.join([str(price['net_price']) for price in self.price_list])
+        return ''
+
     def get_full_name(self):
         return f'{self.name} ({self.code}) ({self.category.name})'
 

@@ -2,7 +2,6 @@ import json
 from datetime import datetime
 from io import BytesIO
 
-
 import xlsxwriter
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import transaction
@@ -49,10 +48,15 @@ class ProductListView(GroupPermissionMixin, TemplateView):
                         product.code = str(wb.cell(row=row, column=3).value)
                         product.category = Category.objects.get_or_create(name=wb.cell(row=row, column=4).value)[0]
                         product.price = float(wb.cell(row=row, column=5).value)
-                        product.pvp = float(wb.cell(row=row, column=6).value)
-                        product.stock = int(wb.cell(row=row, column=7).value)
                         product.inventoried = wb.cell(row=row, column=8).value.lower() == 'si'
                         product.with_tax = wb.cell(row=row, column=9).value.lower() == 'si'
+                        quantity_list = wb.cell(row=row, column=6).value.split(',') if wb.cell(row=row, column=6).value else []
+                        amount_list = wb.cell(row=row, column=7).value.split(',') if wb.cell(row=row, column=7).value else []
+                        price_list = []
+                        for index, quantity in enumerate(quantity_list):
+                            net_price = float(amount_list[index])
+                            price_list.append({"quantity": quantity, "net_price": net_price, "gross_price": product.calculate_gross_price(net_price)})
+                        product.price_list = price_list
                         product.save()
             else:
                 data['error'] = 'No ha seleccionado ninguna opción'
@@ -229,7 +233,17 @@ class ProductStockAdjustmentView(GroupPermissionMixin, TemplateView):
 class ProductExportExcelView(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         try:
-            headers = {'Id': 15, 'Nombre': 75, 'Código': 20, 'Categoría': 20, 'Precio de Compra': 20, 'Precio de Venta': 20, 'Stock': 10, '¿Es inventariado?': 15, '¿Se cobra impuesto?': 15}
+            headers = {
+                'Id': 15,
+                'Nombre': 75,
+                'Código': 20,
+                'Categoría': 20,
+                'Precio de Compra': 20,
+                'Precios cantidad': 50,
+                'Precios valor': 50,
+                '¿Es inventariado?': 15,
+                '¿Se cobra impuesto?': 15
+            }
             output = BytesIO()
             workbook = xlsxwriter.Workbook(output)
             worksheet = workbook.add_worksheet('productos')
@@ -247,8 +261,8 @@ class ProductExportExcelView(LoginRequiredMixin, View):
                 worksheet.write(row, 2, product.code, row_format)
                 worksheet.write(row, 3, product.category.name, row_format)
                 worksheet.write(row, 4, f'{product.price:.2f}', row_format)
-                worksheet.write(row, 5, f'{product.pvp:.2f}', row_format)
-                worksheet.write(row, 6, product.stock, row_format)
+                worksheet.write(row, 5, product.prices_quantity, row_format)
+                worksheet.write(row, 6, product.prices_amount, row_format)
                 worksheet.write(row, 7, 'Si' if product.inventoried else 'No', row_format)
                 worksheet.write(row, 8, 'Si' if product.with_tax else 'No', row_format)
                 row += 1
@@ -257,6 +271,7 @@ class ProductExportExcelView(LoginRequiredMixin, View):
             response = HttpResponse(output, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
             response['Content-Disposition'] = f"attachment; filename=PRODUCTOS_{datetime.now().date().strftime('%d_%m_%Y')}.xlsx"
             return response
-        except:
+        except Exception as e:
+            print(e)
             pass
         return HttpResponseRedirect(reverse_lazy('product_list'))
