@@ -369,6 +369,7 @@ class SaleUpdateView(GroupPermissionMixin, UpdateView):
                         detail.inventory.save()
                         detail.sale_detail.delete()
                         detail.delete()
+                    sale.saledetail_set.all().delete()
                     for i in json.loads(request.POST['products']):
                         quantity = int(i['cant'])
                         product = Product.objects.get(pk=i['id'])
